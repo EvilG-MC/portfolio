@@ -23,11 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Build with Astro
         # Auto-detects pnpm from the `packageManager` field and builds + uploads
         # the dist/ artifact for Pages.
-        uses: withastro/action@v3
+        uses: withastro/action@v6
         env:
           # Authenticates the build-time GitHub API calls (higher rate limit).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,4 +41,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
