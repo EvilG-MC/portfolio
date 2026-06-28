@@ -29,6 +29,10 @@ jobs:
         # the dist/ artifact for Pages.
         uses: withastro/action@v6
         env:
+          # Optional repo Variables (Settings → Secrets and variables → Actions →
+          # Variables). If unset they're empty and site.ts falls back to defaults.
+          PUBLIC_GITHUB_USER: ${{ vars.PUBLIC_GITHUB_USER }}
+          PUBLIC_DISCORD_ID: ${{ vars.PUBLIC_DISCORD_ID }}
           # Authenticates the build-time GitHub API calls (higher rate limit).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

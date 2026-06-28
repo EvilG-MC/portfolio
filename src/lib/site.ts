@@ -2,10 +2,13 @@
 // Override these via PUBLIC_* env vars (see .env.example). They're PUBLIC_ because
 // the Discord ID is also read in a client-side script (the live Lanyard card), and
 // PUBLIC_ vars are the only ones Astro exposes to the browser bundle.
+//
+// `||` (not `??`) so an empty/unset env var — e.g. a CI variable that isn't
+// defined — falls back to the default instead of becoming an empty string.
 
-export const GITHUB_USER = import.meta.env.PUBLIC_GITHUB_USER ?? "EvilG-MC";
+export const GITHUB_USER = import.meta.env.PUBLIC_GITHUB_USER || "EvilG-MC";
 export const DISCORD_ID =
-	import.meta.env.PUBLIC_DISCORD_ID ?? "391283181665517568";
+	import.meta.env.PUBLIC_DISCORD_ID || "391283181665517568";
 
 // Derived URLs used across components.
 export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
