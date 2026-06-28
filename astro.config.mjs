@@ -8,7 +8,10 @@ export default defineConfig({
 	output: "static",
 	devToolbar: { enabled: false },
 
-	// Once a domain is set, uncomment this so og:url / <link canonical> become
-	// absolute URLs in the link embeds (Discord, Twitter, etc.).
-	// site: "https://your-domain.com",
+	// GitHub Pages project site: served at https://evilg-mc.github.io/portfolio/.
+	// `site` makes og:url / <link canonical> absolute; `base` prefixes every
+	// internal link & asset. If you switch to a user page (EvilG-MC.github.io) or
+	// a custom domain, drop `base` and set `site` to that root URL.
+	site: "https://evilg-mc.github.io",
+	base: "/portfolio",
 });

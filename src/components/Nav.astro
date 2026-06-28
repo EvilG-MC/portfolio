@@ -1,4 +1,5 @@
 ---
+import { withBase } from "../lib/path.ts";
 import Icon from "./Icon.astro";
 
 const links = [
@@ -8,12 +9,13 @@ const links = [
 	{ href: "/muse", label: "Muse", icon: "snowflake" },
 ];
 
-const path = Astro.url.pathname.replace(/\/$/, "") || "/";
-const isActive = (href: string) => path === href;
+const norm = (p: string) => p.replace(/\/+$/, "") || "/";
+const path = norm(Astro.url.pathname);
+const isActive = (href: string) => path === norm(withBase(href));
 ---
 
 <nav class="site-nav" aria-label="Primary">
-  <a class="nav-brand" href="/">JustEvil</a>
+  <a class="nav-brand" href={withBase("/")}>JustEvil</a>
   <button
     class="nav-toggle"
     type="button"
@@ -27,7 +29,7 @@ const isActive = (href: string) => path === href;
     {links.map((l) => (
       <li>
         <a
-          href={l.href}
+          href={withBase(l.href)}
           class={isActive(l.href) ? 'active' : ''}
           aria-current={isActive(l.href) ? 'page' : undefined}
         >

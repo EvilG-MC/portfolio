@@ -4,6 +4,7 @@ import {
 	fetchProjects,
 	fetchReadmeBrief,
 } from "../lib/github.ts";
+import { withBase } from "../lib/path.ts";
 import { GITHUB_AVATAR } from "../lib/site.ts";
 import SocialLinks from "./SocialLinks.astro";
 
@@ -43,8 +44,8 @@ const stats = [
         <blockquote class="hero-readme-brief" set:html={`&ldquo;${brief}&rdquo;`} />
       )}
       <div class="actions">
-        <a class="btn btn-primary" href="/projects">View Projects</a>
-        <a class="btn btn-ghost" href="/presence">Presence</a>
+        <a class="btn btn-primary" href={withBase("/projects")}>View Projects</a>
+        <a class="btn btn-ghost" href={withBase("/presence")}>Presence</a>
       </div>
       <SocialLinks variant="hero" />
     </div>

@@ -1,0 +1,44 @@
+name: Deploy to GitHub Pages
+
+on:
+  # Run on pushes to the default branch...
+  push:
+    branches: [master, main]
+  # ...and allow manual runs from the Actions tab.
+  workflow_dispatch:
+
+# Permissions required to deploy to GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; cancel in-progress runs of older commits.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build with Astro
+        # Auto-detects pnpm from the `packageManager` field and builds + uploads
+        # the dist/ artifact for Pages.
+        uses: withastro/action@v3
+        env:
+          # Authenticates the build-time GitHub API calls (higher rate limit).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

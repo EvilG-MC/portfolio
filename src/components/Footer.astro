@@ -1,4 +1,5 @@
 ---
+import { withBase } from "../lib/path.ts";
 import { DISCORD_URL, GITHUB_URL } from "../lib/site.ts";
 import SocialLinks from "./SocialLinks.astro";
 
@@ -36,7 +37,7 @@ const connectLinks = [
     <nav class="footer-col" aria-label="Footer navigation">
       <h3 class="footer-col-title">Navigate</h3>
       <ul>
-        {navLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        {navLinks.map((l) => <li><a href={withBase(l.href)}>{l.label}</a></li>)}
       </ul>
     </nav>
 
