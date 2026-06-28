@@ -1,0 +1,192 @@
+---
+import { fetchGanyu } from "../lib/ganyu.ts";
+import Icon from "./Icon.astro";
+
+// Fetched at build time — stats and lore are static, so they ship as HTML.
+const { stats, description, rarity, vision, imageUrl } = await fetchGanyu();
+const visionTag = rarity
+	? `${"★".repeat(rarity)} ${vision ?? ""}`.trim()
+	: null;
+---
+
+<section id="ganyu" aria-label="Ganyu — the muse behind the theme">
+  <div class="section-inner ganyu-inner">
+    <div class="ganyu-portrait-wrap">
+      <img
+        class="ganyu-portrait"
+        src={imageUrl}
+        alt="Ganyu — Genshin Impact"
+        loading="lazy"
+      />
+      {visionTag && <span class="ganyu-vision-tag">{visionTag}</span>}
+    </div>
+
+    <div class="ganyu-content">
+      <p class="section-label"><Icon name="snowflake" class="label-icon" />The Muse</p>
+      <h1 class="section-title">Why Ganyu?</h1>
+      <span class="rule" aria-hidden="true"></span>
+      <p class="ganyu-why">
+        Ganyu is the reason this whole site is painted in frost and moonlight.
+        Half&#8209;qilin, half&#8209;human, she carries millennia of duty without ever
+        losing her gentleness — diligent to a fault, endlessly patient, and quietly
+        devoted to the people she serves. That balance of relentless work and
+        soft&#8209;spoken calm is something I deeply admire. She's proof that you can be
+        both unstoppable and kind. And, let's be honest, she's breathtaking.
+      </p>
+
+      {stats.length > 0 && (
+        <dl class="ganyu-stats" aria-label="Ganyu character details">
+          {stats.map((s) => (
+            <div class="ganyu-stat">
+              <dt>{s.label}</dt>
+              <dd>
+                {s.vision && <span class="vision-dot" aria-hidden="true"></span>}
+                {s.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {description && <p class="ganyu-desc">{`“${description}”`}</p>}
+
+      <p class="ganyu-source">
+        Character data &amp; art from the
+        <a href="https://genshin.dev" target="_blank" rel="noopener noreferrer">genshin.dev</a> API.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  #ganyu { background: var(--glass); }
+
+  .ganyu-inner {
+    display: grid;
+    grid-template-columns: minmax(240px, 340px) 1fr;
+    gap: 3.5rem;
+    align-items: center;
+  }
+
+  .ganyu-portrait-wrap {
+    position: relative;
+    border-radius: var(--r-lg);
+    padding: 1.5rem 1.5rem 0;
+    background: linear-gradient(160deg, rgba(180, 143, 216, .16), rgba(142, 207, 238, .09));
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .ganyu-portrait-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 25%, rgba(142, 207, 238, .22), transparent 65%);
+    pointer-events: none;
+  }
+
+  .ganyu-portrait {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 12px 32px rgba(142, 207, 238, .28));
+  }
+
+  .ganyu-vision-tag {
+    position: absolute;
+    top: .9rem;
+    left: .9rem;
+    z-index: 2;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: var(--bg);
+    background: var(--frost);
+    padding: .25rem .6rem;
+    border-radius: 999px;
+  }
+
+  .ganyu-why {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    max-width: 560px;
+  }
+
+  .ganyu-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 560px;
+  }
+
+  .ganyu-stat dt {
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--gold);
+    margin-bottom: .25rem;
+  }
+
+  .ganyu-stat dd {
+    font-size: .9rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+  }
+
+  .vision-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--frost);
+    margin-right: .45em;
+    box-shadow: 0 0 8px var(--frost);
+    flex-shrink: 0;
+  }
+
+  .ganyu-desc {
+    font-size: .9rem;
+    font-style: italic;
+    line-height: 1.7;
+    color: var(--sub);
+    border-left: 2px solid var(--lavender);
+    padding-left: .9rem;
+    max-width: 560px;
+  }
+
+  .ganyu-desc:empty { display: none; }
+
+  .ganyu-source {
+    margin-top: 1.25rem;
+    font-size: .72rem;
+    color: var(--muted);
+  }
+
+  .ganyu-source a {
+    color: var(--sub);
+    text-decoration: none;
+  }
+
+  .ganyu-source a:hover { color: var(--frost); }
+
+  @media (max-width: 768px) {
+    .ganyu-inner {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+
+    .ganyu-portrait-wrap {
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .ganyu-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

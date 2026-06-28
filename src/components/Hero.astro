@@ -1,0 +1,326 @@
+---
+import {
+	fetchProfile,
+	fetchProjects,
+	fetchReadmeBrief,
+} from "../lib/github.ts";
+import { GITHUB_AVATAR } from "../lib/site.ts";
+import SocialLinks from "./SocialLinks.astro";
+
+// Fetched at build time — avatar, README brief and GitHub stats ship as static HTML.
+const [profile, projects, brief] = await Promise.all([
+	fetchProfile(),
+	fetchProjects(),
+	fetchReadmeBrief(),
+]);
+
+const avatarUrl = profile?.avatar_url ?? GITHUB_AVATAR;
+const avatarName = profile?.name ?? "JustEvil";
+
+// A compact GitHub stat strip under the avatar. Falls back to last-known values
+// if the API is unavailable so the numbers never render blank.
+const stelle = projects.find((p) => p.name.toLowerCase() === "stelle-music");
+const stats = [
+	{
+		value: profile?.followers != null ? String(profile.followers) : "43",
+		label: "Followers",
+	},
+	{
+		value: profile?.public_repos != null ? String(profile.public_repos) : "27",
+		label: "Repos",
+	},
+	{ value: stelle?.stars ? String(stelle.stars) : "66", label: "Stars" },
+];
+---
+
+<section id="hero" aria-label="Introduction">
+  <div class="hero-layout">
+    <div class="hero-content">
+      <p class="eyebrow">Hobbyist Full-stack &amp; Discord Developer</p>
+      <h1 class="hero-name">Just<em>Evil</em></h1>
+      <p class="hero-sub">Engineering student · Open-source builder</p>
+      {brief && (
+        <blockquote class="hero-readme-brief" set:html={`&ldquo;${brief}&rdquo;`} />
+      )}
+      <div class="actions">
+        <a class="btn btn-primary" href="/projects">View Projects</a>
+        <a class="btn btn-ghost" href="/presence">Presence</a>
+      </div>
+      <SocialLinks variant="hero" />
+    </div>
+
+    <div class="hero-aside">
+      <div class="hero-avatar-frame">
+        <span class="hero-avatar-glow" aria-hidden="true"></span>
+        <span class="hero-avatar-ring" aria-hidden="true"></span>
+        <span class="hero-avatar-orbit" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <svg class={`crystal crystal-${i}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <path d="M12 2v20M4.2 7l15.6 10M19.8 7 4.2 17" />
+            </svg>
+          ))}
+        </span>
+        <img class="hero-gh-avatar" src={avatarUrl} alt={avatarName} width="172" height="172" />
+      </div>
+      <dl class="hero-stats" aria-label="GitHub stats">
+        {stats.map((s) => (
+          <div class="hero-stat">
+            <dt class="hero-stat-value">{s.value}</dt>
+            <dd class="hero-stat-label">{s.label}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </div>
+</section>
+
+<style>
+  #hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  #hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 70% at 50% 100%, transparent 60%, var(--bg) 100%);
+    pointer-events: none;
+  }
+
+  .hero-layout {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 3rem;
+    gap: 3rem;
+  }
+
+  .hero-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 560px;
+  }
+
+  .eyebrow {
+    font-size: .72rem;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-name {
+    font-family: var(--ff-display);
+    font-size: clamp(3.2rem, 9vw, 7.5rem);
+    line-height: 1.0;
+    color: #fff;
+    text-wrap: balance;
+    margin-bottom: .75rem;
+  }
+
+  .hero-name em {
+    font-style: normal;
+    color: var(--frost);
+  }
+
+  .hero-sub {
+    font-size: clamp(.95rem, 2.2vw, 1.25rem);
+    color: var(--lavender);
+    font-weight: 400;
+    margin-bottom: 1.25rem;
+    letter-spacing: .01em;
+  }
+
+  /* README brief — child tags (<b>/<code>) come from set:html, so they're not
+     stamped with the scope attribute; target them with :global(). */
+  .hero-readme-brief {
+    font-size: .95rem;
+    color: var(--sub);
+    font-style: italic;
+    line-height: 1.75;
+    margin-bottom: 1.75rem;
+    max-width: 480px;
+    border-left: 2px solid var(--frost);
+    padding-left: .9rem;
+  }
+
+  .hero-readme-brief :global(b),
+  .hero-readme-brief :global(strong) {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .hero-readme-brief :global(code) {
+    font-family: var(--ff-mono);
+    font-style: normal;
+    font-size: .85em;
+    color: var(--frost);
+    background: var(--frost-dim);
+    padding: .1em .4em;
+    border-radius: 4px;
+  }
+
+  .hero-aside {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.6rem;
+    max-width: 260px;
+  }
+
+  /* GitHub stat strip under the avatar */
+  .hero-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin: 0;
+  }
+
+  .hero-stat { text-align: center; }
+
+  .hero-stat-value {
+    font-family: var(--ff-display);
+    font-size: 1.6rem;
+    color: var(--frost);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .hero-stat-label {
+    margin: .3rem 0 0;
+    font-size: .62rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--sub);
+  }
+
+  /* Decorative frost frame around the avatar: a soft moonlight glow, a slowly
+     orbiting light ring, and a few snowflakes drifting around it. All purely
+     decorative (aria-hidden) and auto-frozen under prefers-reduced-motion. */
+  .hero-avatar-frame {
+    position: relative;
+    width: 172px;
+    height: 172px;
+    display: grid;
+    place-items: center;
+  }
+
+  .hero-avatar-glow {
+    position: absolute;
+    inset: -24px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(142, 207, 238, .22), transparent 68%);
+    filter: blur(6px);
+    animation: avatar-pulse 6s ease-in-out infinite;
+  }
+
+  .hero-avatar-ring {
+    position: absolute;
+    inset: -9px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 58%, var(--frost) 76%, var(--lavender) 86%, transparent 94%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+    opacity: .85;
+    animation: avatar-spin 14s linear infinite;
+  }
+
+  .hero-avatar-orbit {
+    position: absolute;
+    inset: -9px;
+    animation: avatar-spin 26s linear infinite;
+  }
+
+  .hero-avatar-orbit .crystal {
+    position: absolute;
+    color: var(--frost);
+  }
+
+  .crystal-0 { top: -8px; left: 50%; width: 16px; height: 16px; margin-left: -8px; }
+  .crystal-1 { top: 50%; right: -8px; width: 12px; height: 12px; margin-top: -6px; opacity: .7; }
+  .crystal-2 { bottom: 2px; left: 6px; width: 10px; height: 10px; opacity: .5; }
+
+  .hero-gh-avatar {
+    position: relative;
+    z-index: 1;
+    width: 172px;
+    height: 172px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    object-fit: cover;
+    display: block;
+    background: var(--surface2);
+    box-shadow: 0 0 48px rgba(142, 207, 238, .14);
+  }
+
+  @keyframes avatar-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes avatar-pulse {
+    0%, 100% { opacity: .55; transform: scale(1); }
+    50%      { opacity: .9;  transform: scale(1.05); }
+  }
+
+  .actions {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4em;
+    padding: .6em 1.5em;
+    border-radius: var(--r);
+    font-size: .875rem;
+    font-family: var(--ff-body);
+    font-weight: 500;
+    letter-spacing: .03em;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform .18s, background .18s, border-color .18s, color .18s;
+  }
+
+  .btn:hover { transform: translateY(-2px); }
+
+  .btn-primary { background: var(--frost); color: var(--bg); }
+  .btn-primary:hover { background: #aadffa; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--frost);
+    border: 1px solid rgba(142, 207, 238, .35);
+  }
+
+  .btn-ghost:hover {
+    background: var(--frost-dim);
+    border-color: var(--frost);
+  }
+
+  @media (max-width: 768px) {
+    .hero-layout {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 5rem 1.5rem 3rem;
+      gap: 2rem;
+    }
+
+    .hero-content { max-width: 100%; }
+    /* Avatar is hidden on mobile, but keep the stat strip visible. */
+    .hero-aside { max-width: 100%; align-items: flex-start; }
+    .hero-avatar-frame { display: none; }
+  }
+</style>

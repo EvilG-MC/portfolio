@@ -1,0 +1,174 @@
+---
+// Site-wide frost backdrop: a fixed full-viewport canvas of drifting crystals
+// plus a slow aurora glow. Lives behind all page content (z-index 0) so every
+// page shares the same frost atmosphere. Honors prefers-reduced-motion.
+---
+
+<div class="frost-aurora" aria-hidden="true"></div>
+<canvas id="frost-canvas" class="frost-canvas" aria-hidden="true"></canvas>
+
+<style>
+  .frost-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .frost-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(42% 32% at 18% 12%, rgba(142, 207, 238, .12), transparent 70%),
+      radial-gradient(38% 32% at 84% 22%, rgba(180, 143, 216, .10), transparent 70%),
+      radial-gradient(45% 40% at 60% 92%, rgba(142, 207, 238, .07), transparent 72%);
+    animation: aurora-drift 22s ease-in-out infinite alternate;
+  }
+
+  @keyframes aurora-drift {
+    from { transform: translate3d(-2%, -1%, 0) scale(1);    opacity: .75; }
+    to   { transform: translate3d(2%, 2%, 0)  scale(1.12);  opacity: 1; }
+  }
+</style>
+
+<script>
+  declare global {
+    interface Window {
+      frost: (n?: number) => string;
+      ganyu: () => string;
+    }
+  }
+
+  const canvas = document.getElementById('frost-canvas') as HTMLCanvasElement | null;
+  if (canvas) {
+    const ctx = canvas.getContext('2d')!;
+    // Reduced motion → render a single static frame of crystals (no animation),
+    // so the backdrop is still present without any movement.
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const drawCrystal = (x: number, y: number, size: number, rotation: number, alpha: number) => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.strokeStyle = '#8ecfee';
+      ctx.lineWidth = size > 4 ? 1.2 : 0.7;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 6; i++) {
+        ctx.save();
+        ctx.rotate((Math.PI / 3) * i);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -size);
+        if (size > 3) {
+          ctx.moveTo(0, -size * 0.55);
+          ctx.lineTo(size * 0.22, -size * 0.35);
+          ctx.moveTo(0, -size * 0.55);
+          ctx.lineTo(-size * 0.22, -size * 0.35);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+    };
+
+    let W = 0, H = 0;
+    const COUNT = 64;
+    const particles: Array<Record<string, number>> = [];
+    const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    const spawn = (fromTop: boolean) => {
+      const size = rand(2, 8);
+      return {
+        x: rand(0, W),
+        y: fromTop ? rand(-80, 0) : rand(0, H),
+        size,
+        speed: rand(0.15, 0.5),
+        drift: rand(-0.25, 0.25),
+        rot: rand(0, Math.PI),
+        rotSpeed: rand(-0.004, 0.004),
+        alpha: rand(0.06, 0.28),
+      };
+    };
+
+    const resize = () => {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    };
+
+    const init = () => {
+      resize();
+      particles.length = 0;
+      for (let i = 0; i < COUNT; i++) particles.push(spawn(false));
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      for (const p of particles) drawCrystal(p.x, p.y, p.size, p.rot, p.alpha);
+    };
+
+    const step = () => {
+      // Iterate backwards so we can splice spent burst particles safely.
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.y += p.speed; // crystals drift downward like snow
+        p.x += p.drift;
+        p.rot += p.rotSpeed;
+        if (p.y > H + 12) {
+          // Burst particles (from frost()) fall once, then clean themselves up;
+          // the ambient ones re-enter from the top forever.
+          if (p.temp) particles.splice(i, 1);
+          else Object.assign(p, spawn(true), { x: rand(0, W), y: -rand(0, 12) });
+        }
+      }
+    };
+
+    let rafId = 0;
+    const frame = () => {
+      draw();
+      step();
+      rafId = requestAnimationFrame(frame);
+    };
+
+    init();
+
+    if (reduced) {
+      // Static crystals only — no loop, no easter eggs that rely on motion.
+      draw();
+      window.addEventListener('resize', () => {
+        init();
+        draw();
+      });
+    } else {
+      window.addEventListener('resize', resize);
+
+      // Easter egg: frost() drops a flurry of brighter, faster crystals spread
+      // across the screen so the burst is unmistakable.
+      window.frost = (n = 80) => {
+        const count = Math.min(Math.max(n | 0, 1), 400);
+        for (let i = 0; i < count; i++) {
+          const p = spawn(true);
+          p.y = rand(-H, H * 0.7); // spread top-to-mid so it's visible instantly
+          p.alpha = rand(0.4, 0.8); // brighter than the ambient drift
+          p.speed = rand(0.8, 1.8); // fall faster — a real flurry
+          particles.push({ ...p, temp: 1 });
+        }
+        return "❄ let it snow";
+      };
+
+      // Pause the loop while the tab is hidden (no point drawing unseen frames);
+      // always restart cleanly when it becomes visible again.
+      document.addEventListener('visibilitychange', () => {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+        if (!document.hidden) frame();
+      });
+
+      frame();
+    }
+  }
+</script>

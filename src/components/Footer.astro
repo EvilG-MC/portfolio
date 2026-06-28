@@ -1,0 +1,189 @@
+---
+import { DISCORD_URL, GITHUB_URL } from "../lib/site.ts";
+import SocialLinks from "./SocialLinks.astro";
+
+const navLinks = [
+	{ href: "/", label: "Home" },
+	{ href: "/projects", label: "Projects" },
+	{ href: "/presence", label: "Presence" },
+	{ href: "/muse", label: "The Muse" },
+];
+
+const projectLinks = [
+	{ href: "https://github.com/Ganyu-Studios/stelle-music", label: "Stelle" },
+	{ href: "https://github.com/Ganyu-Studios/Hoshimi", label: "Hoshimi" },
+	{ href: "https://github.com/Ganyu-Studios", label: "Ganyu Studios" },
+];
+
+const connectLinks = [
+	{ href: GITHUB_URL, label: "GitHub" },
+	{ href: "https://twitter.com/NewJustEvil", label: "Twitter / X" },
+	{ href: DISCORD_URL, label: "Discord" },
+];
+---
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand-col">
+      <span class="footer-brand">Just<em>Evil</em></span>
+      <p class="footer-tagline">
+        Engineering student &amp; open-source builder — crafting Discord
+        tooling and TypeScript libraries under Ganyu&nbsp;Studios.
+      </p>
+      <SocialLinks variant="footer" />
+    </div>
+
+    <nav class="footer-col" aria-label="Footer navigation">
+      <h3 class="footer-col-title">Navigate</h3>
+      <ul>
+        {navLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="footer-col">
+      <h3 class="footer-col-title">Projects</h3>
+      <ul>
+        {projectLinks.map((l) => (
+          <li><a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a></li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h3 class="footer-col-title">Connect</h3>
+      <ul>
+        {connectLinks.map((l) => (
+          <li><a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a></li>
+        ))}
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p class="footer-made">
+      Made with <span class="footer-emoji" aria-hidden="true">🐐❤️💪</span> — by the community, for the community.
+    </p>
+    <p class="footer-disclaimer">
+      Ganyu and related assets are property of miHoYo&nbsp;Co.&nbsp;Ltd. (HoYoverse).
+      This is a fan-themed personal portfolio. &copy;&nbsp;2026 JustEvil · MIT&nbsp;License.
+    </p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--border);
+    background: var(--glass);
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-top {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 3.5rem 3rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1.6fr .8fr .8fr .8fr;
+    gap: 3rem;
+  }
+
+  .footer-brand-col { max-width: 320px; }
+
+  .footer-brand {
+    font-family: var(--ff-display);
+    font-size: 1.4rem;
+    color: #fff;
+  }
+
+  .footer-brand em {
+    color: var(--frost);
+    font-style: normal;
+  }
+
+  .footer-tagline {
+    margin-top: .75rem;
+    font-size: .85rem;
+    line-height: 1.6;
+    color: var(--sub);
+  }
+
+  .footer-col-title {
+    font-family: var(--ff-body);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+
+  .footer-col ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+  }
+
+  .footer-col a {
+    color: var(--sub);
+    text-decoration: none;
+    font-size: .85rem;
+    transition: color .2s;
+  }
+
+  .footer-col a:hover { color: var(--frost); }
+
+  .footer-bottom {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 1.75rem 3rem 2.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-made {
+    font-size: .85rem;
+    color: var(--text);
+  }
+
+  .footer-emoji {
+    font-size: .9rem;
+    letter-spacing: .05em;
+  }
+
+  .footer-disclaimer {
+    font-size: .72rem;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 480px;
+    text-align: right;
+  }
+
+  @media (max-width: 768px) {
+    .footer-top {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem 1.5rem;
+      padding: 2.5rem 1.5rem 2rem;
+    }
+
+    .footer-brand-col {
+      grid-column: 1 / -1;
+      max-width: 100%;
+    }
+
+    .footer-bottom {
+      padding: 1.5rem 1.5rem 2rem;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .footer-disclaimer {
+      text-align: left;
+      max-width: 100%;
+    }
+  }
+</style>

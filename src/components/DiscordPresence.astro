@@ -1,0 +1,516 @@
+---
+// The text + "recently played" embed are static. The Discord card itself is
+// live (Discord status changes minute to minute), so it's hydrated client-side
+// from the Lanyard API and polled every 30s.
+import Icon from "./Icon.astro";
+
+const SPOTIFY_RECENT =
+	"https://spotify-recently-played-readme.vercel.app/api?user=lcjpn1qvagz3nkokz9ly82e50&count=5";
+---
+
+<section id="discord" aria-label="Discord presence">
+  <div class="section-inner discord-inner">
+    <div class="discord-text">
+      <p class="section-label"><Icon name="activity" class="label-icon" />Presence</p>
+      <h1 class="section-title">Find me on Discord</h1>
+      <span class="rule" aria-hidden="true"></span>
+      <p class="discord-tagline">Technically online. Socially, that's up for debate.</p>
+      <p class="discord-note">
+        Status updated live via
+        <a href="https://lanyard.rest" target="_blank" rel="noopener noreferrer">Lanyard</a>.
+      </p>
+    </div>
+
+    <div id="discord-card" class="discord-card" role="region" aria-label="Discord status card"></div>
+
+    <div class="recently-played-wrap">
+      <p class="recently-played-label">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 01-.277-1.215c3.809-.87 7.076-.496 9.712 1.115a.622.622 0 01.207.857zm1.224-2.722a.78.78 0 01-1.072.257C14.1 12.18 10.763 11.75 6.956 12.86a.78.78 0 01-.454-1.492c4.28-1.302 8.054-.784 10.606.887a.78.78 0 01.257 1.072zm.105-2.835C15.09 9.114 10.362 8.96 7.174 9.906a.937.937 0 11-.545-1.793c3.652-1.109 9.093-.895 12.677 1.297a.937.937 0 01-.946 1.614z"/>
+        </svg>
+        Recently played
+      </p>
+      <img
+        class="recently-played-img"
+        src={SPOTIFY_RECENT}
+        alt="Recently played tracks on Spotify"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</section>
+
+<script>
+  // ─── Live Discord presence via Lanyard ─────────────────────────────────────
+  // DISCORD_ID is read from PUBLIC_DISCORD_ID at build time (see src/lib/site.ts).
+  import { DISCORD_ID } from '../lib/site.ts';
+
+  const STATUS_META: Record<string, { label: string; color: string }> = {
+    online: { label: 'Online', color: '#4ade80' },
+    idle: { label: 'Idle', color: '#fbbf24' },
+    dnd: { label: 'Do Not Disturb', color: '#f87171' },
+    offline: { label: 'Offline', color: '#6b7280' },
+  };
+
+  const SPOTIFY_SVG =
+    '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 01-.277-1.215c3.809-.87 7.076-.496 9.712 1.115a.622.622 0 01.207.857zm1.224-2.722a.78.78 0 01-1.072.257C14.1 12.18 10.763 11.75 6.956 12.86a.78.78 0 01-.454-1.492c4.28-1.302 8.054-.784 10.606.887a.78.78 0 01.257 1.072zm.105-2.835C15.09 9.114 10.362 8.96 7.174 9.906a.937.937 0 11-.545-1.793c3.652-1.109 9.093-.895 12.677 1.297a.937.937 0 01-.946 1.614z"/></svg>';
+
+  let spotifyInterval: ReturnType<typeof setInterval> | null = null;
+
+  function renderDiscordCard(lanyard: any) {
+    const card = document.getElementById('discord-card');
+    if (!card) return;
+
+    if (!lanyard) {
+      card.innerHTML =
+        '<p class="dc-unavailable">Presence unavailable — join the Lanyard server to enable.</p>';
+      return;
+    }
+
+    const { discord_user: u, discord_status, activities, listening_to_spotify, spotify } = lanyard;
+
+    const statusMeta = STATUS_META[discord_status] ?? STATUS_META.offline;
+    const avatarUrl = `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.png?size=128`;
+    // Avatar decoration (the animated frame), if the user has one. passthrough=true
+    // keeps the APNG animation for animated presets (asset prefixed `a_`).
+    const decoAsset = u.avatar_decoration_data?.asset;
+    const decoUrl = decoAsset
+      ? `https://cdn.discordapp.com/avatar-decoration-presets/${decoAsset}.png?size=160&passthrough=true`
+      : null;
+    const bannerStyle = u.banner
+      ? `background-image:url('https://cdn.discordapp.com/banners/${u.id}/${u.banner}.png?size=600');background-size:cover;background-position:center`
+      : u.banner_color
+        ? `background:linear-gradient(135deg,${u.banner_color}cc,${u.banner_color}44)`
+        : 'background:linear-gradient(135deg,#3b1f6e,#1a3a60)';
+
+    // type 2 = Spotify (shown via the dedicated `spotify` object) and type 4 =
+    // custom status (shown under the name). Everything else is a real activity.
+    const realActivities = (activities ?? []).filter((a: any) => a.type !== 2 && a.type !== 4);
+    const customStatus = activities?.find((a: any) => a.type === 4);
+
+    // Rich-presence asset refs come in several formats: a plain app-asset id, an
+    // `mp:external/...` media-proxy ref (e.g. VS Code), or a full URL.
+    const resolveAsset = (raw: string | undefined, appId: string) => {
+      if (!raw) return null;
+      if (raw.startsWith('mp:')) return `https://media.discordapp.net/${raw.slice(3)}`;
+      if (/^https?:\/\//.test(raw)) return raw;
+      return `https://cdn.discordapp.com/app-assets/${appId}/${raw}.png`;
+    };
+
+    // Build the artwork block the way Discord renders it: a large square image
+    // (object-fit cover) with an optional small badge overlaid bottom-right.
+    const buildArt = (large: string | null, small: string | null, alt: string) => {
+      if (!large) return '';
+      const smallImg = small
+        ? `<img class="dc-art-small" src="${small}" alt="" onerror="this.style.display='none'" />`
+        : '';
+      return `<div class="dc-art"><img class="dc-art-large" src="${large}" alt="${alt}" onerror="this.closest('.dc-art').style.display='none'" />${smallImg}</div>`;
+    };
+
+    // Spotify gets its own card (with a progress bar); render it first if active.
+    const spotifyHtml = (listening_to_spotify && spotify)
+      ? `
+        <div class="dc-activity dc-activity--spotify">
+          <span class="dc-activity-label">${SPOTIFY_SVG} Listening to Spotify</span>
+          <div class="dc-activity-body">
+            ${buildArt(spotify.album_art_url, null, spotify.album)}
+            <div class="dc-activity-meta">
+              <span class="dc-activity-song">${spotify.song}</span>
+              <span class="dc-activity-artist">by ${spotify.artist}</span>
+              <span class="dc-activity-artist">on ${spotify.album}</span>
+            </div>
+          </div>
+          <div class="dc-activity-bar">
+            <div class="dc-activity-bar-fill" id="dc-spotify-bar"></div>
+          </div>
+        </div>`
+      : '';
+
+    // One card per real activity, capped so the card stays compact; any overflow
+    // is summarised as a "+N more" line.
+    const MAX_ACTIVITIES = 3;
+    const VERBS: Record<number, string> = { 0: 'Playing', 1: 'Streaming', 3: 'Watching', 5: 'Competing in' };
+    const activityCards = realActivities.slice(0, MAX_ACTIVITIES).map((act: any) => {
+      const large = resolveAsset(act.assets?.large_image, act.application_id);
+      const small = resolveAsset(act.assets?.small_image, act.application_id);
+      return `
+        <div class="dc-activity">
+          <span class="dc-activity-label">${VERBS[act.type] ?? 'Active'}</span>
+          <div class="dc-activity-body">
+            ${buildArt(large, small, act.name)}
+            <div class="dc-activity-meta">
+              <span class="dc-activity-song">${act.name}</span>
+              ${act.details ? `<span class="dc-activity-artist">${act.details}</span>` : ''}
+              ${act.state ? `<span class="dc-activity-artist">${act.state}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const overflow = realActivities.length - MAX_ACTIVITIES;
+    const moreHtml = overflow > 0
+      ? `<p class="dc-activity-more">+${overflow} more ${overflow === 1 ? 'activity' : 'activities'}</p>`
+      : '';
+
+    const activityHtml = spotifyHtml + activityCards + moreHtml;
+
+    card.innerHTML = `
+      <div class="dc-banner" style="${bannerStyle}" aria-hidden="true"></div>
+      <div class="dc-body">
+        <div class="dc-avatar-row">
+          <div class="dc-avatar-wrap">
+            <img class="dc-avatar" src="${avatarUrl}" alt="${u.global_name ?? u.username}" width="76" height="76" />
+            ${decoUrl ? `<img class="dc-avatar-deco" src="${decoUrl}" alt="" aria-hidden="true" onerror="this.remove()" />` : ''}
+            <span class="dc-status-badge" style="background:${statusMeta.color}" aria-label="${statusMeta.label}"></span>
+          </div>
+        </div>
+        <div class="dc-names">
+          <span class="dc-display-name">${u.global_name ?? u.username}</span>
+          <span class="dc-username">@${u.username}</span>
+          ${customStatus?.state ? `<span class="dc-custom-status">${customStatus.emoji?.name ? customStatus.emoji.name + ' ' : ''}${customStatus.state}</span>` : ''}
+        </div>
+        ${activityHtml}
+      </div>
+    `;
+
+    // Animate the Spotify progress bar while listening.
+    if (spotifyInterval) clearInterval(spotifyInterval);
+    const ts = spotify?.timestamps;
+    if (listening_to_spotify && ts?.start && ts?.end) {
+      const update = () => {
+        const fill = document.getElementById('dc-spotify-bar');
+        if (!fill) {
+          if (spotifyInterval) clearInterval(spotifyInterval);
+          return;
+        }
+        const p = Math.min((Date.now() - ts.start) / (ts.end - ts.start), 1);
+        fill.style.width = `${p * 100}%`;
+      };
+      update();
+      spotifyInterval = setInterval(update, 1000);
+    }
+  }
+
+  async function loadPresence() {
+    try {
+      const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
+      const json = await res.json();
+      renderDiscordCard(json?.success ? json.data : null);
+    } catch {
+      renderDiscordCard(null);
+    }
+  }
+
+  loadPresence();
+  setInterval(loadPresence, 30_000);
+</script>
+
+<!-- The live card (.dc-*) is built via innerHTML at runtime, so its styles must
+     be global — Astro's scoped attributes are only stamped on build-time markup. -->
+<style is:global>
+  #discord { background: var(--glass); }
+
+  .discord-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2.25rem;
+  }
+
+  .discord-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .discord-text .rule {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* The live card sits centered below the heading, matching the width of the
+     Spotify "recently played" embed beneath it. */
+  .discord-inner > #discord-card {
+    width: 460px;
+    max-width: 100%;
+    flex-shrink: 0;
+  }
+
+  .discord-tagline {
+    font-size: 1rem;
+    color: var(--text);
+    font-style: italic;
+    margin-bottom: .75rem;
+  }
+
+  .discord-note {
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
+  .discord-note a {
+    color: var(--sub);
+    text-decoration: none;
+  }
+
+  .discord-note a:hover { color: var(--frost); }
+
+  /* Recently played embed */
+  .recently-played-wrap {
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .recently-played-label {
+    font-size: .7rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: #1ed760;
+    display: flex;
+    align-items: center;
+    gap: .4em;
+    margin-bottom: .75rem;
+  }
+
+  .recently-played-label svg { width: 12px; height: 12px; }
+
+  .recently-played-img {
+    display: block;
+    width: 100%;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+  }
+
+  /* Discord card — mimics a Discord profile popup */
+  .discord-card {
+    width: 460px;
+    background: #1e2030;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .07);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+  }
+
+  .dc-banner {
+    height: 80px;
+    background: linear-gradient(135deg, #3b1f6e 0%, #1a3a60 55%, #0c2040 100%);
+    background-size: cover;
+    background-position: center;
+  }
+
+  .dc-body {
+    padding: 0 1rem 1.25rem;
+  }
+
+  .dc-avatar-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    margin-bottom: .75rem;
+  }
+
+  .dc-avatar-wrap {
+    position: relative;
+    margin-top: -32px;
+  }
+
+  .dc-avatar {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 5px solid #1e2030;
+    display: block;
+    object-fit: cover;
+    background: var(--surface2);
+  }
+
+  /* Avatar decoration frame — overlaid centred on the avatar at ~1.2× its size
+     (Discord's ratio: the avatar sits at 1/1.2 of the decoration bounds). */
+  .dc-avatar-deco {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .dc-status-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid #1e2030;
+    display: block;
+    z-index: 2;
+  }
+
+  .dc-names {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    margin-bottom: .75rem;
+  }
+
+  .dc-display-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    display: block;
+  }
+
+  .dc-username {
+    font-size: .76rem;
+    color: #a0a8bc;
+    font-family: var(--ff-mono);
+    display: block;
+  }
+
+  .dc-custom-status {
+    display: flex;
+    align-items: center;
+    gap: .4em;
+    font-size: .78rem;
+    color: #a0a8bc;
+    padding: .5rem .7rem;
+    background: rgba(255, 255, 255, .04);
+    border-radius: 6px;
+  }
+
+  .dc-unavailable {
+    padding: 1.5rem;
+    font-size: .85rem;
+    color: var(--sub);
+    text-align: center;
+  }
+
+  .dc-activity {
+    padding: .65rem .75rem;
+    background: rgba(255,255,255,.04);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    margin-top: .25rem;
+  }
+
+  .dc-activity-label {
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #a0a8bc;
+    display: flex;
+    align-items: center;
+    gap: .4em;
+  }
+
+  .dc-activity-more {
+    margin-top: .5rem;
+    text-align: center;
+    font-size: .72rem;
+    color: #a0a8bc;
+    opacity: .8;
+  }
+
+  .dc-activity--spotify .dc-activity-label { color: #1ed760; }
+  .dc-activity-label svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+  .dc-activity-body {
+    display: flex;
+    gap: .7rem;
+    align-items: center;
+    text-align: left;
+  }
+
+  .dc-activity-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dc-activity-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, .1);
+    overflow: hidden;
+    margin-top: .15rem;
+  }
+
+  .dc-activity-bar-fill {
+    height: 100%;
+    width: 0;
+    background: #1ed760;
+    border-radius: 2px;
+    transition: width 1s linear;
+  }
+
+  /* Rich-presence / album artwork — large square with optional badge overlay,
+     the way Discord renders activity assets. */
+  .dc-art {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+
+  .dc-art-large {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+    border: 1px solid rgba(255, 255, 255, .08);
+    background: rgba(0, 0, 0, .25);
+  }
+
+  .dc-art-small {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #1e2030;
+    background: #1e2030;
+  }
+
+  .dc-activity-song {
+    display: block;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .dc-activity-artist {
+    display: block;
+    font-size: .74rem;
+    color: #a0a8bc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .discord-inner { gap: 2rem; }
+
+    .discord-inner > #discord-card {
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .recently-played-wrap { max-width: 100%; }
+  }
+</style>

@@ -1,0 +1,74 @@
+---
+// A little branded greeting + easter egg for anyone who opens the dev console.
+// Public info only — no tokens, IDs, or anything sensitive.
+---
+
+<script>
+  import { GITHUB_USER } from "../lib/site.ts";
+
+  // Theme colors (match the site's frost palette)
+  const frost = "color:#8ecfee";
+  const lav = "color:#b48fd8";
+  const gold = "color:#e8b84b";
+  const sub = "color:#7a9bbf";
+  const dim = "color:#3a5270";
+
+  console.log(
+    "%c❄  JustEvil  ❄",
+    `${frost};font-size:22px;font-weight:700;text-shadow:0 0 10px rgba(142,207,238,.45)`,
+  );
+  console.log(
+    "%cHobbyist full-stack & Discord dev — building things for the laughs. 🐐",
+    `${sub};font-style:italic`,
+  );
+  console.log(
+    "%c👀 Oh? A fellow dev poking around the console.",
+    `${lav};font-size:13px`,
+  );
+  console.log(
+    "%c❄ Themed after Ganyu · Built with Astro · No trackers, no nonsense.",
+    gold,
+  );
+  console.log(
+    `%c⭐ Like what you see?%c  github.com/${GITHUB_USER}`,
+    `${sub}`,
+    `${frost};font-weight:600`,
+  );
+  console.log(
+    "%c✨ commands: %cganyu()%c · %cfrost()%c   ·   and… ↑↑↓↓←→←→ B A 👀",
+    dim,
+    `${frost};font-weight:700`,
+    dim,
+    `${frost};font-weight:700`,
+    dim,
+  );
+
+  // Easter egg: a quiet little reward for the curious.
+  window.ganyu = function () {
+    console.log(
+      "%c❄  “Even the busiest of us deserve a moment of calm.”  ❄",
+      `${lav};font-size:14px;font-style:italic`,
+    );
+    console.log("%cThanks for exploring. — JustEvil 💙", `${frost}`);
+    return "🐐💙";
+  };
+
+  // Easter egg: the Konami code unleashes a blizzard.
+  const KONAMI = [
+    "arrowup", "arrowup", "arrowdown", "arrowdown",
+    "arrowleft", "arrowright", "arrowleft", "arrowright",
+    "b", "a",
+  ];
+  let step = 0;
+  document.addEventListener("keydown", (e) => {
+    step = e.key.toLowerCase() === KONAMI[step] ? step + 1 : 0;
+    if (step === KONAMI.length) {
+      step = 0;
+      window.frost?.(180);
+      console.log(
+        "%c❄❄❄  KONAMI — let it blizzard  ❄❄❄",
+        `${frost};font-size:16px;font-weight:700;text-shadow:0 0 10px rgba(142,207,238,.5)`,
+      );
+    }
+  });
+</script>

@@ -1,0 +1,179 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   GLOBAL — design tokens, reset, and cross-cutting primitives only.
+   Component-specific styles live in each component's <style> block.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+	--bg: #080c18;
+	--surface: #0e1428;
+	--surface2: #141d3a;
+	--frost: #8ecfee;
+	--frost-dim: rgba(142, 207, 238, 0.12);
+	/* Translucent surface so the frost backdrop drifts subtly behind sections. */
+	--glass: rgba(14, 20, 40, 0.6);
+	--lavender: #b48fd8;
+	--gold: #e8b84b;
+	--text: #d4e8f5;
+	--sub: #7a9bbf;
+	--muted: #3a5270;
+	--border: rgba(142, 207, 238, 0.11);
+	--r: 8px;
+	--r-lg: 14px;
+	--ff-display: "Palatino Linotype", Palatino, Georgia, serif;
+	--ff-body:
+		"Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	--ff-mono: "Cascadia Code", "Fira Code", "Consolas", monospace;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--ff-body);
+	font-size: 1rem;
+	line-height: 1.7;
+	-webkit-font-smoothing: antialiased;
+	overflow-x: hidden;
+	/* Sticky footer: the page content grows to fill the viewport so the footer
+     stays at the bottom even on short pages. */
+	display: flex;
+	flex-direction: column;
+	min-height: 100svh;
+}
+
+/* Page content sits above the fixed frost backdrop (z-index 0). */
+.page-content {
+	flex: 1 0 auto;
+	width: 100%;
+	position: relative;
+	z-index: 1;
+}
+
+/* ─── SECTION PRIMITIVES (shared by Hero, Skills, Projects, Discord, Ganyu) ─── */
+.section-inner {
+	max-width: 1080px;
+	margin: 0 auto;
+	padding: 6rem 3rem;
+}
+
+.section-label {
+	font-size: 0.7rem;
+	letter-spacing: 0.26em;
+	text-transform: uppercase;
+	color: var(--gold);
+	margin-bottom: 0.4rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55em;
+}
+
+.section-title {
+	font-family: var(--ff-display);
+	font-size: clamp(1.7rem, 4vw, 2.6rem);
+	color: #fff;
+	text-wrap: balance;
+	line-height: 1.2;
+}
+
+.rule {
+	display: block;
+	width: 36px;
+	height: 2px;
+	background: linear-gradient(90deg, var(--frost), transparent);
+	margin: 0.8rem 0 2.8rem;
+}
+
+/* ─── ICON UTILITIES ───────────────────────────────────────────────────────
+   These classes are applied to the <svg> rendered by Icon.astro, which lives
+   in Icon's own style scope — so their sizing must stay global. */
+.label-icon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}
+.nav-icon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+}
+.stat-icon {
+	width: 20px;
+	height: 20px;
+	color: var(--frost);
+	display: block;
+	margin-bottom: 0.7rem;
+	opacity: 0.85;
+}
+.link-icon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+.card-gh {
+	width: 19px;
+	height: 19px;
+	color: var(--sub);
+	transition:
+		color 0.2s,
+		transform 0.2s;
+}
+.card:hover .card-gh {
+	color: var(--frost);
+	transform: scale(1.1);
+}
+.card-fork {
+	width: 15px;
+	height: 15px;
+	color: var(--gold);
+}
+
+/* Visually-hidden text for screen readers (e.g. the "Forked" label). */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ─── FOCUS ─── */
+:focus-visible {
+	outline: 2px solid var(--frost);
+	outline-offset: 3px;
+	border-radius: 3px;
+}
+
+/* ─── REDUCED MOTION ─── */
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+/* ─── RESPONSIVE (shared primitives only) ─── */
+@media (max-width: 768px) {
+	.section-inner {
+		padding: 4rem 1.5rem;
+	}
+}

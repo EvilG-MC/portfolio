@@ -1,0 +1,49 @@
+---
+import type { Project } from "../lib/github.ts";
+
+interface Props {
+	project: Project;
+}
+const { project } = Astro.props;
+---
+
+{project.lang && <span class="tag tag-lang">{project.lang}</span>}
+{project.org && <span class="tag tag-org">{project.org}</span>}
+{project.stars > 0 && (
+  <span class="stars" aria-label={`${project.stars} stars`}>&#9733; {project.stars}</span>
+)}
+
+<style>
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--ff-mono);
+    font-size: .72rem;
+    padding: .22em .7em;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--sub);
+    border: 1px solid var(--border);
+  }
+
+  .tag-lang {
+    background: rgba(142, 207, 238, .07);
+    color: var(--frost);
+    border-color: rgba(142, 207, 238, .2);
+  }
+
+  .tag-org {
+    background: rgba(180, 143, 216, .07);
+    color: var(--lavender);
+    border-color: rgba(180, 143, 216, .2);
+  }
+
+  .stars {
+    font-size: .78rem;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: .25em;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

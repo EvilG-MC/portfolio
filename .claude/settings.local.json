@@ -1,0 +1,38 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(gh api *)",
+			"PowerShell(gh api users/EvilG-MC --jq '{name, bio, location, followers, public_repos}')",
+			"PowerShell(gh api users/EvilG-MC/repos --jq '[.[] | {name, description, stargazers_count, language, fork}] | sort_by\\(-.stargazers_count\\) | .[0:8]')",
+			"PowerShell(gh api orgs/Ganyu-Studios --jq '{name, description, location, public_repos}')",
+			"PowerShell(gh api orgs/Ganyu-Studios/repos --jq '[.[] | {name, description, stargazers_count, language, fork}] | sort_by\\(-.stargazers_count\\) | .[0:8]')",
+			"WebFetch(domain:api.github.com)",
+			"Skill(artifact-design)",
+			"Skill(artifact-design:*)",
+			"WebFetch(domain:mja.moe)",
+			"WebFetch(domain:raw.githubusercontent.com)",
+			"WebFetch(domain:api.lanyard.rest)",
+			"WebFetch(domain:github.com)",
+			"Bash(mkdir -p \"C:\\\\Users\\\\JustEvil\\\\Desktop\\\\Personal\\\\Github\\\\portfolio\\\\.claude\")",
+			"mcp__Claude_Preview__preview_start",
+			"WebFetch(domain:genshin.jmp.blue)",
+			"Bash(npm --version)",
+			"Bash(npm install *)",
+			"Bash(npx astro *)",
+			"Bash(mkdir -p _legacy)",
+			"Bash(mv index.html main.js styles.css _legacy/)",
+			"Bash(npm run *)",
+			"Bash(curl -s http://localhost:4321/ -o /tmp/astro-dev.html -w \"HTTP %{http_code}, %{size_download} bytes\\\\n\")",
+			"Read(//tmp/**)",
+			"Bash(pnpm --version)",
+			"Bash(rm -f package-lock.json)",
+			"Bash(rm -rf node_modules)",
+			"Bash(pnpm install *)",
+			"Bash(pnpm run *)",
+			"Bash(pnpm build *)",
+			"Bash(curl -s http://localhost:4321/ -o /dev/null -w \"Dev server: HTTP %{http_code}, %{size_download} bytes\\\\n\")",
+			"Bash(curl -s \"https://api.lanyard.rest/v1/users/391283181665517568\")",
+			"Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\)['data']; u=d['discord_user']; print\\('discord_user keys:', list\\(u.keys\\(\\)\\)\\); print\\('banner:', u.get\\('banner'\\)\\); print\\('banner_color:', u.get\\('banner_color'\\)\\); print\\('accent_color:', u.get\\('accent_color'\\)\\); print\\('avatar:', u.get\\('avatar'\\)\\); print\\('avatar_decoration_data:', u.get\\('avatar_decoration_data'\\)\\)\")"
+		]
+	}
+}

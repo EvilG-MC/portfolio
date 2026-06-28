@@ -1,0 +1,50 @@
+---
+import Icon from "./Icon.astro";
+
+const skills = [
+	"TypeScript",
+	"Node.js",
+	"REST APIs",
+	"Java",
+	"Git",
+];
+---
+
+<section id="skills" aria-label="Skills and technologies">
+  <div class="section-inner">
+    <p class="section-label"><Icon name="layers" class="label-icon" />Stack</p>
+    <h2 class="section-title">Technologies I work with</h2>
+    <span class="rule" aria-hidden="true"></span>
+    <div class="skills-row" role="list">
+      {skills.map((s) => <span class="chip" role="listitem">{s}</span>)}
+    </div>
+  </div>
+</section>
+
+<style>
+  #skills { background: var(--glass); }
+
+  .skills-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .55rem;
+  }
+
+  .chip {
+    font-family: var(--ff-mono);
+    font-size: .78rem;
+    padding: .35em 1em;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    transition: border-color .15s, color .15s;
+    cursor: default;
+  }
+
+  .chip:hover {
+    border-color: var(--frost);
+    color: var(--frost);
+  }
+</style>

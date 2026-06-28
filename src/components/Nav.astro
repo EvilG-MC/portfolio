@@ -1,0 +1,181 @@
+---
+import Icon from "./Icon.astro";
+
+const links = [
+	{ href: "/", label: "Home", icon: "home" },
+	{ href: "/projects", label: "Projects", icon: "folder" },
+	{ href: "/presence", label: "Presence", icon: "activity" },
+	{ href: "/muse", label: "Muse", icon: "snowflake" },
+];
+
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isActive = (href: string) => path === href;
+---
+
+<nav class="site-nav" aria-label="Primary">
+  <a class="nav-brand" href="/">JustEvil</a>
+  <button
+    class="nav-toggle"
+    type="button"
+    aria-expanded="false"
+    aria-controls="nav-menu"
+    aria-label="Toggle navigation menu"
+  >
+    <Icon name="menu" />
+  </button>
+  <ul class="nav-links" id="nav-menu">
+    {links.map((l) => (
+      <li>
+        <a
+          href={l.href}
+          class={isActive(l.href) ? 'active' : ''}
+          aria-current={isActive(l.href) ? 'page' : undefined}
+        >
+          <Icon name={l.icon} class="nav-icon" />
+          {l.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<script>
+  // Mobile menu toggle. On desktop the links are always shown, so this only
+  // matters under the responsive breakpoint.
+  const nav = document.querySelector('.site-nav');
+  const toggle = nav?.querySelector('.nav-toggle');
+  if (nav && toggle) {
+    const setOpen = (open: boolean) => {
+      nav.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    toggle.addEventListener('click', () =>
+      setOpen(!nav.classList.contains('open')),
+    );
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  }
+</script>
+
+<style>
+  .site-nav {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 3rem;
+    background: rgba(8, 12, 24, .82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    font-family: var(--ff-display);
+    font-size: 1.05rem;
+    color: var(--frost);
+    text-decoration: none;
+    letter-spacing: .06em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    position: relative;
+    color: var(--sub);
+    text-decoration: none;
+    font-size: .8rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    transition: color .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: .5em;
+  }
+
+  /* Active-section indicator: a small frost rectangle under the active link. */
+  .nav-links a.active::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -8px;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--frost);
+  }
+
+  .nav-links a.active,
+  .nav-links a:hover,
+  .nav-links a:focus-visible {
+    color: var(--frost);
+  }
+
+  /* Hamburger — only shown under the mobile breakpoint */
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--sub);
+    padding: .35rem;
+    border-radius: var(--r);
+    transition: color .2s;
+  }
+
+  .nav-toggle:hover { color: var(--frost); }
+
+  @media (max-width: 768px) {
+    .site-nav { padding: .8rem 1.5rem; }
+
+    .nav-toggle { display: inline-flex; }
+
+    /* Links collapse into a dropdown panel below the bar */
+    .nav-links {
+      position: absolute;
+      inset-block-start: 100%;
+      inset-inline: 0;
+      flex-direction: column;
+      gap: 0;
+      padding: .25rem 1.5rem 1rem;
+      background: rgba(8, 12, 24, .96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+
+    .site-nav.open .nav-links { display: flex; }
+
+    .nav-links li { width: 100%; }
+
+    .nav-links a {
+      width: 100%;
+      padding: .9rem .25rem;
+      font-size: .85rem;
+      border-bottom: 1px solid rgba(142, 207, 238, .06);
+    }
+
+    .nav-links li:last-child a { border-bottom: none; }
+
+    /* In the dropdown, show the indicator as a left accent bar instead. */
+    .nav-links a.active::after {
+      left: -.6rem;
+      bottom: 50%;
+      transform: translateY(50%);
+      width: 3px;
+      height: 18px;
+    }
+  }
+</style>
